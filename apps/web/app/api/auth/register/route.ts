@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import { db } from "@monkeyprint/db";
 import { hashPassword } from "@monkeyprint/utils/hash";
-import { adminRegisterSchema } from "@monkeyprint/utils/zod";
+import {
+  adminRegisterSchema,
+  studentRegisterSchema,
+  companyRegisterSchema,
+} from "@monkeyprint/utils/zod";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     console.log("Request body:", body);
 
-    const { email, password, fullName } = adminRegisterSchema.parse(body);
+    const { role } = body;
 
     // Check if email already exists
     const existingUserByEmail = await db.user.findUnique({
-      where: { email: email },
+      where: { email: body.email },
     });
 
     if (existingUserByEmail) {
@@ -22,40 +26,122 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash password using bcrypt from utils/hash
-    const hashedPassword = await hashPassword(password);
+    // Hash password
+    const hashedPassword = await hashPassword(body.password);
 
-    const result = await db.$transaction(async (tx) => {
-      // Create user with admin role
-      const newUser = await tx.user.create({
-        data: {
-          email,
-          passwordHash: hashedPassword,
-          role: "admin",
-        },
+    // Handle registration based on role
+    if (role === "admin") {
+      const { email, fullName } = adminRegisterSchema.parse(body);
+
+      const result = await db.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email,
+            passwordHash: hashedPassword,
+            role: "admin",
+          },
+        });
+
+        const newAdmin = await tx.admin.create({
+          data: {
+            userId: newUser.id,
+            fullName,
+          },
+        });
+
+        return { newUser, newAdmin };
       });
 
-      // Create admin profile linked to user
-      const newAdmin = await tx.admin.create({
-        data: {
-          userId: newUser.id,
-          fullName,
+      const { passwordHash, ...userWithoutPassword } = result.newUser;
+
+      return NextResponse.json(
+        {
+          user: userWithoutPassword,
+          admin: result.newAdmin,
+          message: "Admin created successfully",
         },
+        { status: 201 }
+      );
+    }
+
+    if (role === "student") {
+      const { email, firstName, lastName, universityId, fieldOfStudy } =
+        studentRegisterSchema.parse(body);
+
+      const result = await db.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email,
+            passwordHash: hashedPassword,
+            role: "student",
+          },
+        });
+
+        const newStudent = await tx.student.create({
+          data: {
+            userId: newUser.id,
+            firstName,
+            lastName,
+            universityId,
+            fieldOfStudy,
+          },
+        });
+
+        return { newUser, newStudent };
       });
 
-      return { newUser, newAdmin };
-    });
+      const { passwordHash, ...userWithoutPassword } = result.newUser;
 
-    // Don't show the password hash in the response
-    const { passwordHash, ...userWithoutPassword } = result.newUser;
+      return NextResponse.json(
+        {
+          user: userWithoutPassword,
+          student: result.newStudent,
+          message: "Student created successfully",
+        },
+        { status: 201 }
+      );
+    }
+
+    if (role === "company") {
+      const { email, name, description, website } =
+        companyRegisterSchema.parse(body);
+
+      const result = await db.$transaction(async (tx) => {
+        const newUser = await tx.user.create({
+          data: {
+            email,
+            passwordHash: hashedPassword,
+            role: "company",
+          },
+        });
+
+        const newCompany = await tx.company.create({
+          data: {
+            userId: newUser.id,
+            name,
+            description,
+            website,
+          },
+        });
+
+        return { newUser, newCompany };
+      });
+
+      const { passwordHash, ...userWithoutPassword } = result.newUser;
+
+      return NextResponse.json(
+        {
+          user: userWithoutPassword,
+          company: result.newCompany,
+          message: "Company created successfully",
+        },
+        { status: 201 }
+      );
+    }
 
     return NextResponse.json(
-      {
-        user: userWithoutPassword,
-        admin: result.newAdmin,
-        message: "Admin created successfully",
-      },
-      { status: 201 }
+      { message: "Invalid role specified" },
+      { status: 400 }
     );
   } catch (error) {
     console.error("Error in POST /api/auth/register:", error);
