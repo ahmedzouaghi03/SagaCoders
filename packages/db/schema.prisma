@@ -8,19 +8,185 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  SUPER_ADMIN
-  ADMIN
+
+//////////////////////
+// ENUMS
+//////////////////////
+
+enum UserRole {
+  student
+  company
+  admin
 }
 
+enum StudentFileType {
+  cv
+  motivation_letter
+  profile_picture
+}
+
+enum EventImageType {
+  logo
+  banner
+  gallery
+}
+
+enum InternshipStatus {
+  pending
+  approved
+  rejected
+  closed
+}
+
+enum WorkMode {
+  on_site
+  remote
+  hybrid
+}
+
+enum ApplicationStatus {
+  pending
+  accepted
+  rejected
+}
+
+//////////////////////
+// USERS (BASE)
+//////////////////////
+
 model User {
-  id                   String    @id @default(cuid())
-  name            String? 
-  email                String    @unique
-  password             String?
-  phoneNumber          String? 
-  role                 Role      @default(ADMIN)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  isDeleted            Boolean   @default(false)
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String?
+  role         UserRole
+  createdAt    DateTime  @default(now())
+
+  student  Student?
+  company  Company?
+  admin    Admin?
+}
+
+//////////////////////
+// STUDENTS
+//////////////////////
+
+model Student {
+  userId        Int      @id
+  firstName     String?
+  lastName      String?
+  universityId  String?
+  fieldOfStudy  String?
+  cvUrl         String?
+
+  user          User     @relation(fields: [userId], references: [id])
+  files         StudentFile[]
+  applications  Application[]
+}
+
+model StudentFile {
+  id        Int             @id @default(autoincrement())
+  studentId Int
+  fileUrl   String
+  fileType  StudentFileType
+  createdAt DateTime        @default(now())
+
+  student   Student @relation(fields: [studentId], references: [userId])
+}
+
+//////////////////////
+// COMPANIES
+//////////////////////
+
+model Company {
+  userId      Int     @id
+  name        String
+  description String?
+  website     String?
+  logoUrl     String?
+
+  user        User        @relation(fields: [userId], references: [id])
+  internships Internship[]
+}
+
+//////////////////////
+// ADMINS
+//////////////////////
+
+model Admin {
+  userId   Int    @id
+  fullName String
+
+  user     User   @relation(fields: [userId], references: [id])
+}
+
+//////////////////////
+// EVENTS
+//////////////////////
+
+model Event {
+  id            Int          @id @default(autoincrement())
+  name          String
+  description   String?
+  slogan        String?
+  year          Int
+  invitationPdf String?
+  formUrl       String?
+  startDate     DateTime
+  endDate       DateTime
+  location      String?
+  isActive      Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+
+  images        EventImage[]
+  internships   Internship[]
+}
+
+model EventImage {
+  id        Int            @id @default(autoincrement())
+  eventId   Int
+  imageUrl  String
+  imageType EventImageType
+  createdAt DateTime       @default(now())
+
+  event     Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+//////////////////////
+// INTERNSHIPS
+//////////////////////
+
+model Internship {
+  id          Int              @id @default(autoincrement())
+  companyId   Int
+  eventId     Int
+  title       String
+  status      InternshipStatus
+  description String?
+  field       String?
+  duration    String?
+  workMode    WorkMode
+  location    String?
+  createdAt   DateTime         @default(now())
+
+  company     Company          @relation(fields: [companyId], references: [userId])
+  event       Event            @relation(fields: [eventId], references: [id])
+  applications Application[]
+}
+
+//////////////////////
+// APPLICATIONS
+//////////////////////
+
+model Application {
+  id                        Int                @id @default(autoincrement())
+  internshipId              Int
+  applicantId               Int
+  applicantCv               String?
+  applicantMotivationLetter String?
+  status                    ApplicationStatus
+  appliedAt                 DateTime           @default(now())
+  reviewedAt                DateTime?
+
+  internship Internship @relation(fields: [internshipId], references: [id])
+  applicant  Student    @relation(fields: [applicantId], references: [userId])
 }
