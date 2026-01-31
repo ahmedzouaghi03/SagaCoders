@@ -1,8 +1,23 @@
+import {
+  Navbar,
+  HeroSection,
+  FeaturesSection,
+  HowItWorksSection,
+  TestimonialsSection,
+  CTASection,
+  Footer,
+} from "@/components/home";
+
 export default function HomePage() {
   return (
-    <div>
-      <h1>Welcome to My Next.js App!</h1>
-      <p>This is a simple starting page.</p>
-    </div>
+    <main className="min-h-screen">
+      <Navbar />
+      <HeroSection />
+      <FeaturesSection />
+      <HowItWorksSection />
+      <TestimonialsSection />
+      <CTASection />
+      <Footer />
+    </main>
   );
 }
