@@ -10,6 +10,7 @@ import {
   LogOut,
   Bell,
   ChevronDown,
+  ChevronRight,
   Menu,
   X,
 } from "lucide-react";
@@ -30,11 +31,14 @@ const dashboardRoutes: Record<UserRole, string> = {
   guest: "/",
 };
 
-const dashboardLabels: Record<UserRole, string> = {
-  student: "Student Dashboard",
-  company: "Company Dashboard",
-  admin: "Admin Dashboard",
-  guest: "Home",
+// Breadcrumb labels for common routes
+const breadcrumbLabels: Record<string, string> = {
+  internships: "Internships",
+  profile: "Profile",
+  settings: "Settings",
+  applications: "Applications",
+  companies: "Companies",
+  students: "Students",
 };
 
 export default function GlobalHeader({
@@ -47,18 +51,51 @@ export default function GlobalHeader({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const dashboardRoute = dashboardRoutes[userRole];
-  const dashboardLabel = dashboardLabels[userRole];
 
-  // Determine if we're on a dashboard page
-  const isOnDashboard =
-    pathname === dashboardRoute || pathname.startsWith(`${dashboardRoute}/`);
+  // Determine if we're on the main dashboard page
+  const isOnDashboard = pathname === dashboardRoute;
+
+  // Generate breadcrumbs from pathname
+  const generateBreadcrumbs = () => {
+    if (isOnDashboard || !pathname.startsWith(dashboardRoute)) return null;
+
+    const pathParts = pathname.replace(dashboardRoute, "").split("/").filter(Boolean);
+    if (pathParts.length === 0) return null;
+
+    const breadcrumbs: { label: string; href: string }[] = [];
+    let currentPath = dashboardRoute;
+
+    pathParts.forEach((part, index) => {
+      currentPath += `/${part}`;
+      // Check if it's an ID (number or UUID-like)
+      const isId = /^\d+$/.test(part) || part.length > 20;
+      
+      if (!isId) {
+        const label = breadcrumbLabels[part] || part.charAt(0).toUpperCase() + part.slice(1);
+        breadcrumbs.push({
+          label,
+          href: currentPath,
+        });
+      } else {
+        // For IDs, show "Details" or similar
+        breadcrumbs.push({
+          label: "Details",
+          href: currentPath,
+        });
+      }
+    });
+
+    return breadcrumbs;
+  };
+
+  const breadcrumbs = generateBreadcrumbs();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#E9EDF4]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          {/* Left Side - Logo & Dashboard */}
-          <div className="flex items-center gap-6">
+          {/* Left Side - Logo & Navigation */}
+          <div className="flex items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
               <div className="w-8 h-8 bg-gradient-to-br from-[#3D5EE1] to-[#5F74FF] rounded-lg flex items-center justify-center">
@@ -69,19 +106,50 @@ export default function GlobalHeader({
               </span>
             </Link>
 
-            {/* Dashboard Button */}
+            {/* Separator */}
             {userRole !== "guest" && (
-              <Link
-                href={dashboardRoute}
-                className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-[5px] transition-colors ${
-                  isOnDashboard
-                    ? "bg-[#3D5EE1] text-white"
-                    : "bg-[#F4F6FA] text-[#515B73] hover:bg-[#E9EDF4]"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="text-[14px] font-medium">{dashboardLabel}</span>
-              </Link>
+              <div className="hidden sm:block w-px h-6 bg-[#E9EDF4]" />
+            )}
+
+            {/* Dashboard Button & Breadcrumbs */}
+            {userRole !== "guest" && (
+              <nav className="hidden sm:flex items-center gap-1">
+                {/* Dashboard Link */}
+                <Link
+                  href={dashboardRoute}
+                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors text-[14px] font-medium ${
+                    isOnDashboard
+                      ? "text-[#3D5EE1]"
+                      : "text-[#515B73] hover:text-[#3D5EE1]"
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Dashboard</span>
+                </Link>
+
+                {/* Breadcrumbs */}
+                {breadcrumbs && breadcrumbs.length > 0 && (
+                  <>
+                    {breadcrumbs.map((crumb, index) => (
+                      <div key={crumb.href} className="flex items-center">
+                        <ChevronRight className="w-4 h-4 text-[#6A7287]" />
+                        {index === breadcrumbs.length - 1 ? (
+                          <span className="px-2 py-1 text-[14px] font-medium text-[#3D5EE1]">
+                            {crumb.label}
+                          </span>
+                        ) : (
+                          <Link
+                            href={crumb.href}
+                            className="px-2 py-1 text-[14px] font-medium text-[#515B73] hover:text-[#3D5EE1] transition-colors"
+                          >
+                            {crumb.label}
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </>
+                )}
+              </nav>
             )}
           </div>
 
@@ -228,18 +296,45 @@ export default function GlobalHeader({
         <div className="sm:hidden bg-white border-t border-[#E9EDF4]">
           <div className="px-4 py-4 space-y-2">
             {userRole !== "guest" && (
-              <Link
-                href={dashboardRoute}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`flex items-center gap-2 px-4 py-3 rounded-[5px] ${
-                  isOnDashboard
-                    ? "bg-[#3D5EE1] text-white"
-                    : "bg-[#F4F6FA] text-[#515B73]"
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span className="text-[14px] font-medium">{dashboardLabel}</span>
-              </Link>
+              <>
+                {/* Dashboard Link */}
+                <Link
+                  href={dashboardRoute}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-[5px] ${
+                    isOnDashboard
+                      ? "text-[#3D5EE1] bg-[#F4F6FA]"
+                      : "text-[#515B73]"
+                  }`}
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span className="text-[14px] font-medium">Dashboard</span>
+                </Link>
+
+                {/* Breadcrumbs for Mobile */}
+                {breadcrumbs && breadcrumbs.length > 0 && (
+                  <div className="flex items-center gap-1 px-4 py-2 text-[13px]">
+                    {breadcrumbs.map((crumb, index) => (
+                      <div key={crumb.href} className="flex items-center">
+                        <ChevronRight className="w-3.5 h-3.5 text-[#6A7287]" />
+                        {index === breadcrumbs.length - 1 ? (
+                          <span className="px-1 font-medium text-[#3D5EE1]">
+                            {crumb.label}
+                          </span>
+                        ) : (
+                          <Link
+                            href={crumb.href}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="px-1 text-[#515B73]"
+                          >
+                            {crumb.label}
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
