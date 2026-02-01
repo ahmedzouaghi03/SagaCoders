@@ -39,6 +39,8 @@ const breadcrumbLabels: Record<string, string> = {
   applications: "Applications",
   companies: "Companies",
   students: "Students",
+  createInternship: "Create Offer",
+  updateInternship: "Edit Offer",
 };
 
 export default function GlobalHeader({

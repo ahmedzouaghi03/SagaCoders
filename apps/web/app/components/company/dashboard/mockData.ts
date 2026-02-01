@@ -1,0 +1,166 @@
+import { CompanyInternship, CompanyApplication, DashboardStats } from "./types";
+
+// Mock data for company internships
+export const mockCompanyInternships: CompanyInternship[] = [
+  {
+    id: 1,
+    title: "Full Stack Developer Intern",
+    description: "Build modern web applications",
+    field: "Web Development",
+    location: "Casablanca",
+    duration: "3 months",
+    workMode: "hybrid",
+    status: "approved",
+    createdAt: new Date("2026-01-15"),
+    applicationsCount: 12,
+    pendingCount: 5,
+  },
+  {
+    id: 2,
+    title: "Data Science Intern",
+    description: "Work with ML models and analytics",
+    field: "Data Science",
+    location: "Rabat",
+    duration: "6 months",
+    workMode: "on_site",
+    status: "approved",
+    createdAt: new Date("2026-01-20"),
+    applicationsCount: 8,
+    pendingCount: 3,
+  },
+  {
+    id: 3,
+    title: "DevOps Engineer Intern",
+    description: "Manage CI/CD pipelines",
+    field: "DevOps",
+    location: "Remote",
+    duration: "4 months",
+    workMode: "remote",
+    status: "pending",
+    createdAt: new Date("2026-01-28"),
+    applicationsCount: 0,
+    pendingCount: 0,
+  },
+  {
+    id: 4,
+    title: "Mobile Developer Intern",
+    description: "Build cross-platform apps",
+    field: "Mobile Development",
+    location: "Marrakech",
+    duration: "3 months",
+    workMode: "hybrid",
+    status: "closed",
+    createdAt: new Date("2025-12-01"),
+    applicationsCount: 15,
+    pendingCount: 0,
+  },
+];
+
+// Mock data for recent applications
+export const mockRecentApplications: CompanyApplication[] = [
+  {
+    id: 1,
+    internship: {
+      id: 1,
+      title: "Full Stack Developer Intern",
+    },
+    applicant: {
+      id: 101,
+      firstName: "Ahmed",
+      lastName: "Benali",
+      email: "ahmed.benali@university.ma",
+      universityId: "STU2024001",
+      fieldOfStudy: "Computer Science",
+      cvUrl: "/cv/ahmed-benali.pdf",
+    },
+    status: "pending",
+    appliedAt: new Date("2026-01-30"),
+    reviewedAt: null,
+  },
+  {
+    id: 2,
+    internship: {
+      id: 1,
+      title: "Full Stack Developer Intern",
+    },
+    applicant: {
+      id: 102,
+      firstName: "Fatima",
+      lastName: "Zahra",
+      email: "fatima.zahra@university.ma",
+      universityId: "STU2024002",
+      fieldOfStudy: "Software Engineering",
+      cvUrl: "/cv/fatima-zahra.pdf",
+    },
+    status: "pending",
+    appliedAt: new Date("2026-01-29"),
+    reviewedAt: null,
+  },
+  {
+    id: 3,
+    internship: {
+      id: 2,
+      title: "Data Science Intern",
+    },
+    applicant: {
+      id: 103,
+      firstName: "Youssef",
+      lastName: "El Amrani",
+      email: "youssef.elamrani@university.ma",
+      universityId: "STU2024003",
+      fieldOfStudy: "Data Science",
+      cvUrl: "/cv/youssef-elamrani.pdf",
+    },
+    status: "accepted",
+    appliedAt: new Date("2026-01-25"),
+    reviewedAt: new Date("2026-01-28"),
+  },
+  {
+    id: 4,
+    internship: {
+      id: 1,
+      title: "Full Stack Developer Intern",
+    },
+    applicant: {
+      id: 104,
+      firstName: "Sara",
+      lastName: "Idrissi",
+      email: "sara.idrissi@university.ma",
+      universityId: "STU2024004",
+      fieldOfStudy: "Computer Science",
+      cvUrl: "/cv/sara-idrissi.pdf",
+    },
+    status: "rejected",
+    appliedAt: new Date("2026-01-22"),
+    reviewedAt: new Date("2026-01-26"),
+  },
+  {
+    id: 5,
+    internship: {
+      id: 2,
+      title: "Data Science Intern",
+    },
+    applicant: {
+      id: 105,
+      firstName: "Omar",
+      lastName: "Benjelloun",
+      email: "omar.benjelloun@university.ma",
+      universityId: "STU2024005",
+      fieldOfStudy: "Mathematics",
+      cvUrl: "/cv/omar-benjelloun.pdf",
+    },
+    status: "pending",
+    appliedAt: new Date("2026-01-31"),
+    reviewedAt: null,
+  },
+];
+
+// Mock dashboard stats
+export const mockDashboardStats: DashboardStats = {
+  totalInternships: 4,
+  activeInternships: 2,
+  totalApplications: 35,
+  pendingApplications: 8,
+  acceptedApplications: 12,
+  rejectedApplications: 15,
+};
