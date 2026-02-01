@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
+import { createCompanyInternship } from "@/actions/companyActions";
 
 type WorkMode = "on_site" | "remote" | "hybrid";
 
@@ -73,8 +74,32 @@ const durationOptions = [
 export default function CreateInternshipPage() {
   const router = useRouter();
   const [formData, setFormData] = useState<InternshipFormData>(initialFormData);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Partial<Record<keyof InternshipFormData, string>>>({});
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+
+  // Get company ID from localStorage on mount
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const parsed = JSON.parse(user);
+        // The user.id is the company's userId (same as companyId in the Company table)
+        if (parsed.id) {
+          setCompanyId(parsed.id);
+        } else {
+          setSubmitError("No company ID found. Please log in again.");
+        }
+      } catch {
+        setSubmitError("Invalid user data. Please log in again.");
+      }
+    } else {
+      setSubmitError("Not logged in. Please log in first.");
+      // Optionally redirect to login
+      // router.push("/login");
+    }
+  }, []);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof InternshipFormData, string>> = {};
@@ -101,21 +126,37 @@ export default function CreateInternshipPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
+
+    if (!companyId) {
+      setSubmitError("No company ID found. Please log in again.");
+      return;
+    }
 
     if (!validateForm()) {
       return;
     }
 
-    setIsSubmitting(true);
+    startTransition(async () => {
+      const result = await createCompanyInternship({
+        companyId, // Now using the actual company ID from state
+        title: formData.title,
+        description: formData.description,
+        field: formData.field,
+        duration: formData.duration,
+        workMode: formData.workMode,
+        location: formData.location || undefined,
+        requirements: formData.requirements || undefined,
+        responsibilities: formData.responsibilities || undefined,
+        benefits: formData.benefits || undefined,
+      });
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    console.log("Submitting internship:", formData);
-    // TODO: Implement actual API call
-
-    setIsSubmitting(false);
-    router.push("/company/internships");
+      if (result.success) {
+        router.push("/company/internships");
+      } else {
+        setSubmitError(result.message);
+      }
+    });
   };
 
   const handleChange = (
@@ -123,7 +164,6 @@ export default function CreateInternshipPage() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (errors[name as keyof InternshipFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -158,6 +198,17 @@ export default function CreateInternshipPage() {
 
       {/* Form Content */}
       <div className="max-w-4xl mx-auto px-6 lg:px-8 py-8">
+        {submitError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 bg-[#E82646]/10 border border-[#E82646]/20 rounded-lg flex items-center gap-3"
+          >
+            <AlertCircle className="w-5 h-5 text-[#E82646]" />
+            <p className="text-[14px] text-[#E82646]">{submitError}</p>
+          </motion.div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <motion.div
@@ -468,10 +519,10 @@ export default function CreateInternshipPage() {
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isPending}
                 className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#3D5EE1] to-[#5F74FF] text-white rounded-lg text-[14px] font-medium hover:shadow-lg transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (
+                {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Creating...

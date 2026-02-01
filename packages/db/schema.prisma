@@ -166,6 +166,9 @@ model Internship {
   duration    String?
   workMode    WorkMode
   location    String?
+  requirements    String?
+  responsibilities String?
+  benefits        String?
   createdAt   DateTime         @default(now())
 
   company     Company          @relation(fields: [companyId], references: [userId])

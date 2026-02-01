@@ -38,7 +38,7 @@ export async function POST(req: Request) {
           data: {
             email,
             passwordHash: hashedPassword,
-            role: "admin",
+            role: "ADMIN", // Changed to uppercase
           },
         });
 
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
           data: {
             email,
             passwordHash: hashedPassword,
-            role: "student",
+            role: "STUDENT", // Changed to uppercase
           },
         });
 
@@ -111,7 +111,7 @@ export async function POST(req: Request) {
           data: {
             email,
             passwordHash: hashedPassword,
-            role: "company",
+            role: "COMPANY", // Changed to uppercase
           },
         });
 

@@ -1,14 +1,14 @@
 import { ApplicationStatus, InternshipStatus, WorkMode } from "@monkeyprint/db";
 
 export interface CompanyInternship {
-  id: number;
+  id: number | string;
   title: string;
   description: string | null;
   field: string | null;
   duration: string | null;
-  workMode: WorkMode;
+  workMode: "ON_SITE" | "REMOTE" | "HYBRID" | "on_site" | "remote" | "hybrid";
   location: string | null;
-  status: InternshipStatus;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CLOSED" | "pending" | "approved" | "rejected" | "closed";
   createdAt: Date;
   applicationsCount: number;
   pendingCount: number;
