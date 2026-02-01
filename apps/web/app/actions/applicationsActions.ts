@@ -1,7 +1,6 @@
 "use server";
 import { db } from '@monkeyprint/db';
-
-type ApplicationStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+import { type ApplicationStatus } from '@/types';
 
 type CreateApplicationData = {
     internshipId: string;
