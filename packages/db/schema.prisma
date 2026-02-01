@@ -55,11 +55,13 @@ enum ApplicationStatus {
 //////////////////////
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  passwordHash String?
-  role         UserRole
-  createdAt    DateTime  @default(now())
+  id                   Int       @id @default(autoincrement())
+  email                String    @unique
+  passwordHash         String?
+  role                 UserRole
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  createdAt            DateTime  @default(now())
 
   student  Student?
   company  Company?
