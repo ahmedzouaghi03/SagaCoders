@@ -1,34 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Building2,
   Mail,
   Globe,
   Calendar,
-  Camera,
   Edit3,
-  Save,
   X,
+  Briefcase,
+  Users,
+  CheckCircle2,
+  Camera,
+  Loader2,
   Key,
   Eye,
   EyeOff,
-  Loader2,
-  CheckCircle2,
   AlertCircle,
-  FileText,
-  Briefcase,
-  Users,
 } from "lucide-react";
+import {
+  getCompanyProfile,
+  updateCompanyProfile,
+  getCompanyProfileStats,
+} from "@/actions/companyActions";
 
 interface CompanyProfile {
+  id: string;
   name: string;
   email: string;
+  description: string | null;
+  website: string | null;
+  logoUrl: string | null;
+  createdAt: Date;
+}
+
+interface EditForm {
+  name: string;
   description: string;
   website: string;
-  logoUrl?: string;
-  createdAt: string;
 }
 
 interface PasswordForm {
@@ -43,28 +54,22 @@ interface CompanyStats {
   totalApplications: number;
 }
 
-// Mock data - would come from API
-const mockProfile: CompanyProfile = {
-  name: "TechCorp Solutions",
-  email: "contact@techcorp.com",
-  description:
-    "TechCorp Solutions is a leading technology company specializing in innovative software solutions. We help businesses transform their digital presence through cutting-edge applications and services.",
-  website: "https://techcorp.com",
-  logoUrl: undefined,
-  createdAt: "2024-03-10",
-};
-
-const mockStats: CompanyStats = {
-  totalInternships: 12,
-  activeInternships: 4,
-  totalApplications: 87,
-};
-
 export default function CompanyProfilePage() {
-  const [profile, setProfile] = useState<CompanyProfile>(mockProfile);
-  const [stats] = useState<CompanyStats>(mockStats);
+  const router = useRouter();
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [profile, setProfile] = useState<CompanyProfile | null>(null);
+  const [stats, setStats] = useState<CompanyStats>({
+    totalInternships: 0,
+    activeInternships: 0,
+    totalApplications: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<CompanyProfile>(profile);
+  const [editForm, setEditForm] = useState<EditForm>({
+    name: "",
+    description: "",
+    website: "",
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -78,21 +83,93 @@ export default function CompanyProfilePage() {
   const [passwordErrors, setPasswordErrors] = useState<Partial<PasswordForm>>({});
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Get company ID from localStorage
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id) {
+          setCompanyId(user.id);
+        } else {
+          router.push("/login");
+        }
+      } catch {
+        router.push("/login");
+      }
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Fetch profile and stats
+  useEffect(() => {
+    if (!companyId) return;
+
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      const [profileResult, statsResult] = await Promise.all([
+        getCompanyProfile(companyId),
+        getCompanyProfileStats(companyId),
+      ]);
+
+      if (profileResult.success && profileResult.data) {
+        setProfile(profileResult.data as CompanyProfile);
+        setEditForm({
+          name: profileResult.data.name || "",
+          description: profileResult.data.description || "",
+          website: profileResult.data.website || "",
+        });
+      } else {
+        setErrorMessage(profileResult.message || "Failed to load profile");
+      }
+
+      if (statsResult.success && statsResult.data) {
+        setStats(statsResult.data);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [companyId]);
 
   const handleEditToggle = () => {
-    if (isEditing) {
-      setEditForm(profile);
+    if (isEditing && profile) {
+      setEditForm({
+        name: profile.name || "",
+        description: profile.description || "",
+        website: profile.website || "",
+      });
     }
     setIsEditing(!isEditing);
   };
 
   const handleSaveProfile = async () => {
+    if (!companyId) return;
+
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setProfile(editForm);
-    setIsEditing(false);
+    setErrorMessage(null);
+
+    const result = await updateCompanyProfile({
+      companyId,
+      name: editForm.name,
+      description: editForm.description || undefined,
+      website: editForm.website || undefined,
+    });
+
+    if (result.success && result.data) {
+      setProfile(result.data as CompanyProfile);
+      setIsEditing(false);
+      showSuccess("Profile updated successfully!");
+    } else {
+      setErrorMessage(result.message || "Failed to update profile");
+    }
+
     setIsSaving(false);
-    showSuccess("Profile updated successfully!");
   };
 
   const validatePassword = (): boolean => {
@@ -118,32 +195,92 @@ export default function CompanyProfilePage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validatePassword()) return;
+    if (!validatePassword() || !companyId) return;
 
     setIsChangingPassword(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setPasswordForm({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setShowPasswordSection(false);
-    setIsChangingPassword(false);
-    showSuccess("Password changed successfully!");
+    setErrorMessage(null);
+
+    try {
+      const response = await fetch("/api/auth/changePassword", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: companyId,
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setErrorMessage(data.message || "Failed to change password");
+        setIsChangingPassword(false);
+        return;
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setShowPasswordSection(false);
+      showSuccess("Password changed successfully!");
+    } catch (error) {
+      setErrorMessage("Something went wrong. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
+
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message);
     setTimeout(() => setSuccessMessage(null), 3000);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[#3D5EE1]" />
+          <span className="text-[14px] text-[#6A7287]">Loading profile...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 rounded-full bg-[#E82646]/10 flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-6 h-6 text-[#E82646]" />
+          </div>
+          <h2 className="text-[20px] font-semibold text-[#202C4B] mb-2">
+            Profile Not Found
+          </h2>
+          <p className="text-[14px] text-[#6A7287] mb-4">
+            {errorMessage || "Unable to load your profile."}
+          </p>
+          <button
+            onClick={() => router.push("/company")}
+            className="text-[14px] font-medium text-[#3D5EE1] hover:underline"
+          >
+            Back to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -157,6 +294,19 @@ export default function CompanyProfilePage() {
         >
           <CheckCircle2 className="w-5 h-5" />
           {successMessage}
+        </motion.div>
+      )}
+
+      {/* Error Toast */}
+      {errorMessage && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className="fixed top-20 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-[#E82646] text-white rounded-lg shadow-lg"
+        >
+          <AlertCircle className="w-5 h-5" />
+          {errorMessage}
         </motion.div>
       )}
 
@@ -252,17 +402,22 @@ export default function CompanyProfilePage() {
             <div className="absolute -bottom-12 left-6">
               <div className="relative">
                 <div className="w-24 h-24 rounded-xl bg-white p-1 shadow-lg">
-                  <div className="w-full h-full rounded-lg bg-gradient-to-br from-[#3D5EE1] to-[#5F74FF] flex items-center justify-center text-white text-3xl font-semibold">
-                    {profile.logoUrl ? (
-                      <img
-                        src={profile.logoUrl}
-                        alt={profile.name}
-                        className="w-full h-full rounded-lg object-cover"
-                      />
-                    ) : (
-                      <Building2 className="w-10 h-10" />
-                    )}
-                  </div>
+                  {profile.logoUrl ? (
+                    <img
+                      src={profile.logoUrl}
+                      alt={profile.name}
+                      className="w-full h-full rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-lg bg-gradient-to-br from-[#3D5EE1] to-[#5F74FF] flex items-center justify-center text-white text-3xl font-semibold">
+                      {profile.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  )}
                 </div>
                 <button className="absolute bottom-0 right-0 w-8 h-8 bg-white border border-[#E9EDF4] rounded-full flex items-center justify-center text-[#6A7287] hover:text-[#3D5EE1] hover:border-[#3D5EE1] transition-colors shadow-sm">
                   <Camera className="w-4 h-4" />
@@ -320,12 +475,13 @@ export default function CompanyProfilePage() {
                   </label>
                   <input
                     type="email"
-                    value={editForm.email}
-                    onChange={(e) =>
-                      setEditForm({ ...editForm, email: e.target.value })
-                    }
-                    className="w-full h-[44px] px-4 bg-[#F8FAFC] border border-[#E9EDF4] rounded-lg text-[14px] text-[#202C4B] focus:outline-none focus:border-[#3D5EE1] transition-colors"
+                    value={profile.email}
+                    disabled
+                    className="w-full h-[44px] px-4 bg-[#F4F6FA] border border-[#E9EDF4] rounded-lg text-[14px] text-[#6A7287] cursor-not-allowed"
                   />
+                  <p className="mt-1 text-[12px] text-[#6A7287]">
+                    Email cannot be changed
+                  </p>
                 </div>
 
                 <div>
@@ -374,7 +530,7 @@ export default function CompanyProfilePage() {
                       </>
                     ) : (
                       <>
-                        <Save className="w-4 h-4" />
+                        <CheckCircle2 className="w-4 h-4" />
                         Save Changes
                       </>
                     )}
@@ -385,53 +541,29 @@ export default function CompanyProfilePage() {
               /* View Mode */
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-[20px] font-semibold text-[#202C4B]">
+                  <h2 className="text-[22px] font-semibold text-[#202C4B]">
                     {profile.name}
                   </h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="px-2 py-0.5 bg-[#3D5EE1]/10 text-[#3D5EE1] text-[12px] font-medium rounded-full">
-                      Company
-                    </span>
-                  </div>
+                  <p className="text-[14px] text-[#6A7287]">{profile.email}</p>
                 </div>
 
                 {/* Description */}
                 {profile.description && (
                   <div className="p-4 bg-[#F8FAFC] rounded-lg border border-[#E9EDF4]">
-                    <div className="flex items-start gap-3">
-                      <FileText className="w-5 h-5 text-[#6A7287] flex-shrink-0 mt-0.5" />
-                      <p className="text-[14px] text-[#515B73] leading-relaxed">
-                        {profile.description}
-                      </p>
-                    </div>
+                    <p className="text-[14px] text-[#515B73] leading-relaxed">
+                      {profile.description}
+                    </p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Email */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center flex-shrink-0">
-                      <Mail className="w-5 h-5 text-[#6A7287]" />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-[#6A7287] mb-0.5">
-                        Email Address
-                      </p>
-                      <p className="text-[14px] font-medium text-[#202C4B]">
-                        {profile.email}
-                      </p>
-                    </div>
-                  </div>
-
                   {/* Website */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center">
                       <Globe className="w-5 h-5 text-[#6A7287]" />
                     </div>
                     <div>
-                      <p className="text-[12px] text-[#6A7287] mb-0.5">
-                        Website
-                      </p>
+                      <p className="text-[12px] text-[#6A7287]">Website</p>
                       {profile.website ? (
                         <a
                           href={profile.website}
@@ -447,15 +579,26 @@ export default function CompanyProfilePage() {
                     </div>
                   </div>
 
+                  {/* Email */}
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-[#6A7287]" />
+                    </div>
+                    <div>
+                      <p className="text-[12px] text-[#6A7287]">Email</p>
+                      <p className="text-[14px] font-medium text-[#202C4B]">
+                        {profile.email}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Member Since */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center flex-shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-[#F4F6FA] flex items-center justify-center">
                       <Calendar className="w-5 h-5 text-[#6A7287]" />
                     </div>
                     <div>
-                      <p className="text-[12px] text-[#6A7287] mb-0.5">
-                        Member Since
-                      </p>
+                      <p className="text-[12px] text-[#6A7287]">Member Since</p>
                       <p className="text-[14px] font-medium text-[#202C4B]">
                         {formatDate(profile.createdAt)}
                       </p>
@@ -541,8 +684,7 @@ export default function CompanyProfilePage() {
                   </button>
                 </div>
                 {passwordErrors.currentPassword && (
-                  <p className="mt-1 text-[12px] text-[#E82646] flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="mt-1 text-[12px] text-[#E82646]">
                     {passwordErrors.currentPassword}
                   </p>
                 )}
@@ -582,8 +724,7 @@ export default function CompanyProfilePage() {
                   </button>
                 </div>
                 {passwordErrors.newPassword && (
-                  <p className="mt-1 text-[12px] text-[#E82646] flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="mt-1 text-[12px] text-[#E82646]">
                     {passwordErrors.newPassword}
                   </p>
                 )}
@@ -623,8 +764,7 @@ export default function CompanyProfilePage() {
                   </button>
                 </div>
                 {passwordErrors.confirmPassword && (
-                  <p className="mt-1 text-[12px] text-[#E82646] flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
+                  <p className="mt-1 text-[12px] text-[#E82646]">
                     {passwordErrors.confirmPassword}
                   </p>
                 )}
@@ -707,9 +847,9 @@ export default function CompanyProfilePage() {
             </div>
 
             <div className="p-4 bg-[#F8FAFC] rounded-lg">
-              <p className="text-[12px] text-[#6A7287] mb-1">Last Login</p>
+              <p className="text-[12px] text-[#6A7287] mb-1">Member Since</p>
               <p className="text-[14px] font-medium text-[#202C4B]">
-                {formatDate(new Date().toISOString())}
+                {formatDate(profile.createdAt)}
               </p>
             </div>
           </div>

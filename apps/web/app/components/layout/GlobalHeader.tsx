@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   User,
-  Settings,
   LogOut,
   Bell,
   ChevronDown,
@@ -49,6 +48,7 @@ export default function GlobalHeader({
   userAvatar,
 }: GlobalHeaderProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -56,6 +56,18 @@ export default function GlobalHeader({
 
   // Determine if we're on the main dashboard page
   const isOnDashboard = pathname === dashboardRoute;
+
+  // Handle logout
+  const handleLogout = () => {
+    // Clear all auth data from localStorage
+    localStorage.removeItem("user");
+    localStorage.removeItem("profile");
+    
+    setIsProfileOpen(false);
+    
+    // Redirect to login page
+    router.push("/login");
+  };
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -233,24 +245,12 @@ export default function GlobalHeader({
                           <User className="w-4 h-4" />
                           <span className="text-[14px]">My Profile</span>
                         </Link>
-                        <Link
-                          href={`/${userRole}/settings`}
-                          onClick={() => setIsProfileOpen(false)}
-                          className="flex items-center gap-3 px-4 py-2.5 text-[#515B73] hover:bg-[#F4F6FA] transition-colors"
-                        >
-                          <Settings className="w-4 h-4" />
-                          <span className="text-[14px]">Settings</span>
-                        </Link>
                       </div>
 
                       {/* Logout */}
                       <div className="border-t border-[#E9EDF4] py-2">
                         <button
-                          onClick={() => {
-                            setIsProfileOpen(false);
-                            // Handle logout
-                            console.log("Logout");
-                          }}
+                          onClick={handleLogout}
                           className="flex items-center gap-3 px-4 py-2.5 text-[#E82646] hover:bg-[#FDE9ED] w-full transition-colors"
                         >
                           <LogOut className="w-4 h-4" />
