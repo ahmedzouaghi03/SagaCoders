@@ -14,6 +14,9 @@ type CreateInternshipData = {
     field?: string;
     duration?: string;
     location?: string;
+    requirements?: string;
+    responsibilities?: string;
+    benefits?: string;
 };
 
 export async function createInternship(data: CreateInternshipData) {
@@ -29,6 +32,9 @@ export async function createInternship(data: CreateInternshipData) {
                 field: data.field,
                 duration: data.duration,
                 location: data.location,
+                requirements: data.requirements,
+                responsibilities: data.responsibilities,
+                benefits: data.benefits,
             },
         });
 
@@ -84,12 +90,15 @@ type UpdateInternshipData = {
     field?: string;
     duration?: string;
     location?: string;
+    requirements?: string;
+    responsibilities?: string;
+    benefits?: string;
 };
 
 export async function updateInternship(data: UpdateInternshipData) {
     try {
         const { internshipId, ...updateData } = data;
-        
+
         const internship = await db.internship.update({
             where: {
                 id: internshipId,

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Users, Eye, Edit, MoreVertical } from "lucide-react";
+import { Users, Eye, Edit } from "lucide-react";
 import { CompanyInternship } from "./types";
 import { workModeConfig, internshipStatusConfig } from "./config";
 
@@ -10,10 +10,33 @@ interface InternshipCardProps {
   internship: CompanyInternship;
 }
 
+// Helper to normalize workMode to lowercase
+function normalizeWorkMode(workMode: string): "on_site" | "remote" | "hybrid" {
+  const normalized = workMode.toLowerCase() as "on_site" | "remote" | "hybrid";
+  if (normalized === "on_site" || normalized === "remote" || normalized === "hybrid") {
+    return normalized;
+  }
+  return "hybrid"; // default fallback
+}
+
+// Helper to normalize status to lowercase
+function normalizeStatus(status: string): "pending" | "approved" | "rejected" | "closed" {
+  const normalized = status.toLowerCase() as "pending" | "approved" | "rejected" | "closed";
+  if (normalized === "pending" || normalized === "approved" || normalized === "rejected" || normalized === "closed") {
+    return normalized;
+  }
+  return "pending"; // default fallback
+}
+
 export default function InternshipCard({ internship }: InternshipCardProps) {
   const router = useRouter();
-  const workMode = workModeConfig[internship.workMode];
-  const status = internshipStatusConfig[internship.status];
+  
+  // Normalize values for config lookup
+  const normalizedWorkMode = normalizeWorkMode(internship.workMode);
+  const normalizedStatus = normalizeStatus(internship.status);
+  
+  const workMode = workModeConfig[normalizedWorkMode];
+  const status = internshipStatusConfig[normalizedStatus];
   const StatusIcon = status.icon;
 
   return (

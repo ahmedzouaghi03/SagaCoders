@@ -1,22 +1,21 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Plus,
   Search,
-  Filter,
   Briefcase,
-  MapPin,
-  Building2,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import InternshipCard from "@/components/company/dashboard/InternshipCard";
 import {
-  mockCompanyInternships,
-  type CompanyInternship,
-} from "@/components/company/dashboard";
+  getCompanyInternships,
+  getCompanyInternshipStats,
+  getCompanyInternshipFields,
+} from "@/actions/companyActions";
 
 type WorkModeFilter = "all" | "on_site" | "remote" | "hybrid";
 type StatusFilter = "all" | "pending" | "approved" | "rejected" | "closed";
@@ -28,8 +27,32 @@ interface InternshipFilters {
   field: string;
 }
 
+interface InternshipData {
+  id: string;
+  title: string;
+  description: string | null;
+  field: string | null;
+  duration: string | null;
+  workMode: "on_site" | "remote" | "hybrid";
+  location: string | null;
+  status: "pending" | "approved" | "rejected" | "closed";
+  createdAt: Date;
+  applicationsCount: number;
+  pendingCount: number;
+}
+
+interface Stats {
+  total: number;
+  active: number;
+  pending: number;
+  closed: number;
+}
+
+
 export default function CompanyInternshipsPage() {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
   const [filters, setFilters] = useState<InternshipFilters>({
     search: "",
     workMode: "all",
@@ -37,18 +60,95 @@ export default function CompanyInternshipsPage() {
     field: "",
   });
 
-  // Get unique fields for filter dropdown
-  const availableFields = useMemo(() => {
-    const fields = mockCompanyInternships
-      .map((i) => i.field)
-      .filter((f): f is string => f !== null);
-    return [...new Set(fields)];
-  }, []);
+  const [internships, setInternships] = useState<InternshipData[]>([]);
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    active: 0,
+    pending: 0,
+    closed: 0,
+  });
+  const [availableFields, setAvailableFields] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [companyId, setCompanyId] = useState<string | null>(null);
 
-  // Filter internships
+  // Get company ID from localStorage
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id) {
+          setCompanyId(user.id);
+        } else {
+          console.error("No user ID found in localStorage");
+          router.push("/login");
+        }
+      } catch (error) {
+        console.error("Error parsing user from localStorage:", error);
+        router.push("/login");
+      }
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Fetch initial data when companyId is available
+  useEffect(() => {
+    if (!companyId) return;
+
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      const [internshipsResult, statsResult, fieldsResult] = await Promise.all([
+        getCompanyInternships(companyId),
+        getCompanyInternshipStats(companyId),
+        getCompanyInternshipFields(companyId),
+      ]);
+
+      if (internshipsResult.success && internshipsResult.data) {
+        setInternships(internshipsResult.data as InternshipData[]);
+      }
+
+      if (statsResult.success && statsResult.data) {
+        setStats(statsResult.data);
+      }
+
+      if (fieldsResult.success && fieldsResult.data) {
+        setAvailableFields(fieldsResult.data);
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [companyId]);
+
+  // Fetch filtered data when filters change (debounced for search)
+  useEffect(() => {
+    if (!companyId) return;
+
+    const timeoutId = setTimeout(() => {
+      startTransition(async () => {
+        const result = await getCompanyInternships(companyId, {
+          search: filters.search || undefined,
+          workMode: filters.workMode,
+          status: filters.status,
+          field: filters.field || undefined,
+        });
+
+        if (result.success && result.data) {
+          setInternships(result.data as InternshipData[]);
+        }
+      });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [filters, companyId]);
+
+  // Filter internships client-side for immediate feedback
   const filteredInternships = useMemo(() => {
-    return mockCompanyInternships.filter((internship) => {
-      // Search filter
+    return internships.filter((internship) => {
+      // Search filter (client-side for immediate feedback)
       if (filters.search) {
         const searchLower = filters.search.toLowerCase();
         const matchesSearch =
@@ -59,34 +159,20 @@ export default function CompanyInternshipsPage() {
         if (!matchesSearch) return false;
       }
 
-      // Work mode filter
-      if (filters.workMode !== "all" && internship.workMode !== filters.workMode) {
-        return false;
-      }
-
-      // Status filter
-      if (filters.status !== "all" && internship.status !== filters.status) {
-        return false;
-      }
-
-      // Field filter
-      if (filters.field && internship.field !== filters.field) {
-        return false;
-      }
-
       return true;
     });
-  }, [filters]);
+  }, [internships, filters.search]);
 
-  // Stats
-  const stats = useMemo(() => {
-    return {
-      total: mockCompanyInternships.length,
-      active: mockCompanyInternships.filter((i) => i.status === "approved").length,
-      pending: mockCompanyInternships.filter((i) => i.status === "pending").length,
-      closed: mockCompanyInternships.filter((i) => i.status === "closed").length,
-    };
-  }, []);
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[#3D5EE1]" />
+          <span className="text-[14px] text-[#6A7287]">Loading internships...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -170,6 +256,9 @@ export default function CompanyInternshipsPage() {
                 }
                 className="w-full h-[40px] pl-10 pr-4 bg-[#F8FAFC] border border-[#E9EDF4] rounded-lg text-[14px] text-[#202C4B] placeholder-[#6A7287] focus:outline-none focus:border-[#3D5EE1] transition-colors"
               />
+              {isPending && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3D5EE1] animate-spin" />
+              )}
             </div>
 
             {/* Filter Dropdowns */}
@@ -263,7 +352,21 @@ export default function CompanyInternshipsPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.1 * index }}
               >
-                <InternshipCard internship={internship} />
+                <InternshipCard
+                  internship={{
+                    id: internship.id, // Keep as string UUID, don't parse to int
+                    title: internship.title,
+                    description: internship.description,
+                    field: internship.field,
+                    duration: internship.duration,
+                    workMode: internship.workMode,
+                    location: internship.location,
+                    status: internship.status,
+                    createdAt: internship.createdAt,
+                    applicationsCount: internship.applicationsCount,
+                    pendingCount: internship.pendingCount,
+                  }}
+                />
               </motion.div>
             ))}
           </motion.div>

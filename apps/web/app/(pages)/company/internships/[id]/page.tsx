@@ -20,51 +20,49 @@ import {
   FileText,
   Eye,
   MoreVertical,
-  ExternalLink,
+  Loader2,
 } from "lucide-react";
+import {
+  getCompanyInternshipById,
+  deleteCompanyInternship,
+} from "@/actions/companyActions";
 
-type WorkMode = "on_site" | "remote" | "hybrid";
-type InternshipStatus = "PENDING" | "APPROVED" | "REJECTED" | "CLOSED";
+type WorkMode = "on_site" | "remote" | "hybrid" | "ON_SITE" | "REMOTE" | "HYBRID";
+type InternshipStatus = "PENDING" | "APPROVED" | "REJECTED" | "CLOSED" | "pending" | "approved" | "rejected" | "closed";
 
 interface Internship {
   id: string;
   title: string;
-  description: string;
-  field: string;
-  duration: string;
+  description: string | null;
+  field: string | null;
+  duration: string | null;
   workMode: WorkMode;
-  location: string;
+  location: string | null;
   status: InternshipStatus;
-  requirements: string;
-  responsibilities: string;
-  benefits: string;
-  createdAt: string;
+  requirements: string | null;
+  responsibilities: string | null;
+  benefits: string | null;
+  createdAt: Date;
   applicationsCount: number;
+  pendingCount: number;
 }
 
-// Mock data - would come from API
-const mockInternship: Internship = {
-  id: "1",
-  title: "Full Stack Developer Intern",
-  description:
-    "We are looking for a passionate Full Stack Developer Intern to join our dynamic team. You will work on real-world projects, collaborating with experienced developers to build scalable web applications using modern technologies.",
-  field: "Full Stack Development",
-  duration: "3 months",
-  workMode: "hybrid",
-  location: "Casablanca, Morocco",
-  status: "APPROVED",
-  requirements:
-    "• Currently pursuing a degree in Computer Science or related field\n• Proficiency in JavaScript/TypeScript\n• Familiarity with React and Node.js\n• Basic understanding of databases (SQL or NoSQL)\n• Strong problem-solving skills",
-  responsibilities:
-    "• Develop and maintain web applications\n• Write clean, maintainable code\n• Participate in code reviews\n• Collaborate with the design team\n• Debug and fix issues",
-  benefits:
-    "• Competitive stipend\n• Flexible working hours\n• Mentorship from senior developers\n• Certificate upon completion\n• Potential for full-time offer",
-  createdAt: "2026-01-15",
-  applicationsCount: 12,
-};
+// Normalize status to uppercase for config lookup
+function normalizeStatus(status: string): "PENDING" | "APPROVED" | "REJECTED" | "CLOSED" {
+  return status.toUpperCase() as "PENDING" | "APPROVED" | "REJECTED" | "CLOSED";
+}
+
+// Normalize work mode to lowercase for label lookup
+function normalizeWorkMode(workMode: string): "on_site" | "remote" | "hybrid" {
+  const lower = workMode.toLowerCase();
+  if (lower === "on_site" || lower === "remote" || lower === "hybrid") {
+    return lower;
+  }
+  return "hybrid";
+}
 
 const statusConfig: Record<
-  InternshipStatus,
+  "PENDING" | "APPROVED" | "REJECTED" | "CLOSED",
   { label: string; color: string; bgColor: string; icon: typeof CheckCircle2 }
 > = {
   PENDING: {
@@ -93,7 +91,7 @@ const statusConfig: Record<
   },
 };
 
-const workModeLabels: Record<WorkMode, string> = {
+const workModeLabels: Record<"on_site" | "remote" | "hybrid", string> = {
   on_site: "On-site",
   remote: "Remote",
   hybrid: "Hybrid",
@@ -103,23 +101,59 @@ export default function ViewInternshipPage() {
   const router = useRouter();
   const params = useParams();
   const [internship, setInternship] = useState<Internship | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Get company ID from localStorage
   useEffect(() => {
-    // Simulate API call
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        if (user.id) {
+          setCompanyId(user.id);
+        } else {
+          router.push("/login");
+        }
+      } catch {
+        router.push("/login");
+      }
+    } else {
+      router.push("/login");
+    }
+  }, [router]);
+
+  // Fetch internship data
+  useEffect(() => {
+    if (!companyId || !params.id) return;
+
     const fetchInternship = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setInternship({ ...mockInternship, id: params.id as string });
+      setIsLoading(true);
+      setError(null);
+
+      const result = await getCompanyInternshipById(
+        params.id as string,
+        companyId
+      );
+
+      if (result.success && result.data) {
+        setInternship(result.data as Internship);
+      } else {
+        setError(result.message || "Failed to load internship");
+      }
+
       setIsLoading(false);
     };
 
     fetchInternship();
-  }, [params.id]);
+  }, [params.id, companyId]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string) => {
+    return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
@@ -127,28 +161,40 @@ export default function ViewInternshipPage() {
   };
 
   const handleDelete = async () => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    router.push("/company/internships");
+    if (!companyId || !internship) return;
+
+    setIsDeleting(true);
+    const result = await deleteCompanyInternship(internship.id, companyId);
+
+    if (result.success) {
+      router.push("/company/internships");
+    } else {
+      setError(result.message || "Failed to delete internship");
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-3 border-[#3D5EE1] border-t-transparent rounded-full" />
+        <div className="flex items-center gap-3">
+          <Loader2 className="w-6 h-6 animate-spin text-[#3D5EE1]" />
+          <span className="text-[14px] text-[#6A7287]">Loading internship...</span>
+        </div>
       </div>
     );
   }
 
-  if (!internship) {
+  if (error || !internship) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-[20px] font-semibold text-[#202C4B] mb-2">
-            Internship Not Found
+            {error || "Internship Not Found"}
           </h2>
           <p className="text-[14px] text-[#6A7287] mb-4">
-            The internship you're looking for doesn't exist.
+            The internship you&apos;re looking for doesn&apos;t exist or you don&apos;t have permission to view it.
           </p>
           <Link
             href="/company/internships"
@@ -161,7 +207,9 @@ export default function ViewInternshipPage() {
     );
   }
 
-  const StatusIcon = statusConfig[internship.status].icon;
+  const normalizedStatus = normalizeStatus(internship.status);
+  const normalizedWorkMode = normalizeWorkMode(internship.workMode);
+  const StatusIcon = statusConfig[normalizedStatus].icon;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -186,15 +234,24 @@ export default function ViewInternshipPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2.5 border border-[#E9EDF4] rounded-lg text-[14px] font-medium text-[#515B73] hover:bg-[#F4F6FA] transition-colors"
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 border border-[#E9EDF4] rounded-lg text-[14px] font-medium text-[#515B73] hover:bg-[#F4F6FA] transition-colors disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 px-4 py-2.5 bg-[#E82646] text-white rounded-lg text-[14px] font-medium hover:bg-[#d11f3d] transition-colors"
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 bg-[#E82646] text-white rounded-lg text-[14px] font-medium hover:bg-[#d11f3d] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                Delete
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete"
+                )}
               </button>
             </div>
           </motion.div>
@@ -210,7 +267,7 @@ export default function ViewInternshipPage() {
             transition={{ duration: 0.3 }}
           >
             <button
-              onClick={() => router.back()}
+              onClick={() => router.push("/company/internships")}
               className="flex items-center gap-2 text-[14px] text-[#6A7287] hover:text-[#202C4B] transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -226,12 +283,12 @@ export default function ViewInternshipPage() {
                   <span
                     className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium"
                     style={{
-                      backgroundColor: `${statusConfig[internship.status].color}15`,
-                      color: statusConfig[internship.status].color,
+                      backgroundColor: `${statusConfig[normalizedStatus].color}15`,
+                      color: statusConfig[normalizedStatus].color,
                     }}
                   >
                     <StatusIcon className="w-3.5 h-3.5" />
-                    {statusConfig[internship.status].label}
+                    {statusConfig[normalizedStatus].label}
                   </span>
                 </div>
                 <p className="text-[14px] text-[#515B73]">
@@ -242,7 +299,7 @@ export default function ViewInternshipPage() {
               {/* Actions */}
               <div className="flex items-center gap-2">
                 <Link
-                  href={`/company/internships/${internship.id}/edit`}
+                  href={`/company/internships/updateInternship?id=${internship.id}`}
                   className="flex items-center gap-2 px-4 py-2 border border-[#E9EDF4] rounded-lg text-[14px] font-medium text-[#515B73] hover:bg-[#F4F6FA] transition-colors"
                 >
                   <Edit3 className="w-4 h-4" />
@@ -307,7 +364,7 @@ export default function ViewInternshipPage() {
               <div>
                 <p className="text-[12px] text-[#6A7287]">Field</p>
                 <p className="text-[14px] font-medium text-[#202C4B]">
-                  {internship.field}
+                  {internship.field || "Not specified"}
                 </p>
               </div>
             </div>
@@ -324,7 +381,7 @@ export default function ViewInternshipPage() {
               <div>
                 <p className="text-[12px] text-[#6A7287]">Duration</p>
                 <p className="text-[14px] font-medium text-[#202C4B]">
-                  {internship.duration}
+                  {internship.duration || "Not specified"}
                 </p>
               </div>
             </div>
@@ -341,7 +398,7 @@ export default function ViewInternshipPage() {
               <div>
                 <p className="text-[12px] text-[#6A7287]">Work Mode</p>
                 <p className="text-[14px] font-medium text-[#202C4B]">
-                  {workModeLabels[internship.workMode]}
+                  {workModeLabels[normalizedWorkMode]}
                 </p>
               </div>
             </div>
@@ -359,6 +416,11 @@ export default function ViewInternshipPage() {
                 <p className="text-[12px] text-[#6A7287]">Applications</p>
                 <p className="text-[14px] font-medium text-[#202C4B]">
                   {internship.applicationsCount}
+                  {internship.pendingCount > 0 && (
+                    <span className="text-[#E5A000] ml-1">
+                      ({internship.pendingCount} pending)
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -382,7 +444,7 @@ export default function ViewInternshipPage() {
             </h2>
           </div>
           <p className="text-[14px] text-[#515B73] leading-relaxed whitespace-pre-line">
-            {internship.description}
+            {internship.description || "No description provided."}
           </p>
         </motion.div>
 

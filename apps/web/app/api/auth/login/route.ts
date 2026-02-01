@@ -53,11 +53,11 @@ export async function POST(request: NextRequest) {
 
     // Get role-specific data
     let roleData = null;
-    if (user.role === "student" && user.student) {
+    if (user.role === "STUDENT" && user.student) {
       roleData = user.student;
-    } else if (user.role === "company" && user.company) {
+    } else if (user.role === "COMPANY" && user.company) {
       roleData = user.company;
-    } else if (user.role === "admin" && user.admin) {
+    } else if (user.role === "ADMIN" && user.admin) {
       roleData = user.admin;
     }
 

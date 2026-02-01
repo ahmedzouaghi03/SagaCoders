@@ -72,13 +72,13 @@ export default function LoginPage() {
       // Redirect based on user role
       const role = data.user.role;
       switch (role) {
-        case "student":
+        case "STUDENT":
           router.push("/student");
           break;
-        case "company":
+        case "COMPANY":
           router.push("/company");
           break;
-        case "admin":
+        case "ADMIN":
           router.push("/admin");
           break;
         default:
