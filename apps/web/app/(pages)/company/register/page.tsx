@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import Input from "@/components/ui/input";
-import Button from "@/components/ui/Button";
+import Button from "@/components/shared/Button";
 
 export default function CompanyRegisterPage() {
   const router = useRouter();
