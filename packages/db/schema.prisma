@@ -32,10 +32,10 @@ enum EventImageType {
 }
 
 enum InternshipStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  CLOSED
+  pending
+  approved
+  rejected
+  closed
 }
 
 enum WorkMode {
@@ -156,11 +156,11 @@ model EventImage {
 //////////////////////
 
 model Internship {
-  id          String            @id @default(uuid()) @db.Uuid
+  id          Int              @id @default(autoincrement())
   companyId   Int
   eventId     Int
   title       String
-  status      InternshipStatus  @default(PENDING)
+  status      InternshipStatus
   description String?
   field       String?
   duration    String?
