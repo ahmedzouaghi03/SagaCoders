@@ -3,22 +3,23 @@
 import { ButtonHTMLAttributes, forwardRef } from "react";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline";
+  variant?: "primary" | "secondary" | "outline" | "auth";
   isLoading?: boolean;
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ children, variant = "primary", isLoading, className = "", ...props }, ref) => {
     const baseStyles =
-      "relative px-6 py-3 font-semibold rounded-xl transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden";
+      "relative font-medium transition-all duration-300 ease-out disabled:opacity-50 disabled:cursor-not-allowed overflow-hidden font-roboto";
 
     const variants = {
       primary:
-        "bg-gradient-to-r from-royalStart to-royalEnd text-white hover:shadow-lg hover:shadow-royalStart/30 hover:scale-[1.02] active:scale-[0.98]",
+        "px-6 py-3 rounded-xl bg-gradient-to-r from-royalStart to-royalEnd text-white hover:shadow-lg hover:shadow-royalStart/30 hover:scale-[1.02] active:scale-[0.98]",
       secondary:
-        "bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/30 backdrop-blur-sm",
+        "px-6 py-3 rounded-xl bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-white/30 backdrop-blur-sm",
       outline:
-        "bg-transparent text-royalStart border-2 border-royalStart hover:bg-royalStart hover:text-white",
+        "px-6 py-3 rounded-xl bg-transparent text-royalStart border-2 border-royalStart hover:bg-royalStart hover:text-white",
+      auth: "w-full h-9 rounded-[5px] bg-[#506EE4] hover:bg-[#3D5EE1] text-white text-sm",
     };
 
     return (
@@ -31,7 +32,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
             <svg
-              className="animate-spin h-5 w-5"
+              className="animate-spin h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
