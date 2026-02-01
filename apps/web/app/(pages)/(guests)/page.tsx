@@ -191,9 +191,13 @@ export default function HomePage() {
                 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6"
               >
                 Forum{" "}
-                <span className="bg-gradient-to-r from-[#3751FF] to-[#5F74FF] bg-clip-text text-transparent">
-                  ENET'COM
+                <span>
+                  <span className="text-[#3751FF]">ENET'</span>
+                  <span className="text-[#FF6B35]">COM</span>
                 </span>
+                <sup className="ml-2 inline-flex items-center px-3 py-1 bg-gradient-to-r from-[#FF6B35] to-[#FF8F5E] text-white text-base md:text-lg font-bold rounded-full shadow-lg shadow-[#FF6B35]/30 align-top relative -top-2">
+                  11.0
+                </sup>
               </motion.h1>
 
               <motion.p

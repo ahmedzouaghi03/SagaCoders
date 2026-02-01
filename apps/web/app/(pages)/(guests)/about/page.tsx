@@ -180,7 +180,7 @@ export default function AboutPage() {
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               À Propos du Forum{" "}
               <span>
-                <span className="text-[#FF6B35]">ENET'</span>
+                <span className="text-[#3751FF]">ENET'</span>
                 <span className="text-[#FF6B35]">COM</span>
               </span>
             </h1>

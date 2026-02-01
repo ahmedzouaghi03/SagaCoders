@@ -38,7 +38,7 @@ const contactInfo = [
   {
     icon: MapPin,
     title: "Adresse",
-    details: ["ENET'Com - Route de Soukra Km 4", "BP 1163, 3018 Sfax, Tunisie"],
+    details: ["ENET'Com - Cite El Ons", "BP 1163, 3018 Sfax, Tunisie"],
   },
   {
     icon: Phone,
@@ -154,7 +154,7 @@ export default function ContactPage() {
             </span>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
               Nous Sommes à Votre{" "}
-              <span className="bg-gradient-to-r from-[#3751FF] to-[#5F74FF] bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#FF6B35] to-[#FF6B35] bg-clip-text text-transparent">
                 Écoute
               </span>
             </h1>
@@ -383,7 +383,7 @@ export default function ContactPage() {
                 </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <a
-                    href="https://www.enetcom.tn"
+                    href="https://enetcom.rnu.tn/fr"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-4 bg-[#F8FAFC] rounded-xl hover:bg-[#3751FF]/5 hover:border-[#3751FF]/30 border border-transparent transition-all duration-300"
@@ -394,7 +394,7 @@ export default function ContactPage() {
                     </span>
                   </a>
                   <a
-                    href="https://www.facebook.com/forumenetcom"
+                    href="https://www.facebook.com/mtc.enetcom"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 p-4 bg-[#F8FAFC] rounded-xl hover:bg-[#3751FF]/5 hover:border-[#3751FF]/30 border border-transparent transition-all duration-300"
