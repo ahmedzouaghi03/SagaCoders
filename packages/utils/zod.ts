@@ -1,21 +1,40 @@
 // packages/utils/zod.ts
 import * as z from "zod";
 
-export const RoleEnum = z.enum(["SUPER_ADMIN", "ADMIN"]);
+// Match UserRole enum from Prisma schema
+export const UserRoleEnum = z.enum(["student", "company", "admin"]);
 
-// Define a schema for input validation
+// Base user registration schema
 export const registerSchema = z.object({
-  name: z.string().min(1, "Username is required").max(100),
   email: z.string().min(1, "Email is required").email("Invalid email"),
   password: z
     .string()
     .min(1, "Password is required")
     .min(8, "Password must have more than 8 characters"),
-  role: RoleEnum,
+  role: UserRoleEnum,
+});
+
+// Admin registration schema
+export const adminRegisterSchema = registerSchema.extend({
+  role: z.literal("admin"),
+  fullName: z.string().min(1, "Full name is required"),
+});
+
+// Student registration schema
+export const studentRegisterSchema = registerSchema.extend({
+  role: z.literal("student"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
-  phoneNumber: z.string().optional(),
-  image: z.string().optional(),
+  universityId: z.string().optional(),
+  fieldOfStudy: z.string().optional(),
+});
+
+// Company registration schema
+export const companyRegisterSchema = registerSchema.extend({
+  role: z.literal("company"),
+  name: z.string().min(1, "Company name is required"),
+  description: z.string().optional(),
+  website: z.string().url().optional(),
 });
 
 import { object, string } from "zod";
@@ -28,6 +47,15 @@ export const signInSchema = object({
     .min(1, "Password is required")
     .min(8, "Password must be more than 8 characters"),
 });
+
+// Internship status enum
+export const InternshipStatusEnum = z.enum(["pending", "approved", "rejected", "closed"]);
+
+// Work mode enum
+export const WorkModeEnum = z.enum(["on_site", "remote", "hybrid"]);
+
+// Application status enum
+export const ApplicationStatusEnum = z.enum(["pending", "accepted", "rejected"]);
 
 export const productUpdateSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
