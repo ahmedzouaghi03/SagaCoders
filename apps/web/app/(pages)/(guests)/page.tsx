@@ -40,7 +40,7 @@ const previousEditions = [
     companies: 45,
     students: 500,
     internships: 120,
-    image: "/images/couverture.png",
+    image: "/gallery/2022/10.jpg",
   },
   {
     year: "2023",
@@ -48,7 +48,7 @@ const previousEditions = [
     companies: 38,
     students: 420,
     internships: 95,
-    image: "/images/couverture.png",
+    image: "/gallery/2023/19.jpg",
   },
   {
     year: "2022",
@@ -56,7 +56,7 @@ const previousEditions = [
     companies: 32,
     students: 380,
     internships: 85,
-    image: "/images/couverture.png",
+    image: "/gallery/2024/30.jpg",
   },
 ];
 
@@ -438,10 +438,13 @@ export default function HomePage() {
                       <div className="text-xs text-[#515B73]">Stages</div>
                     </div>
                   </div>
-                  <button className="w-full flex items-center justify-center gap-2 py-3 text-[#3751FF] font-medium hover:bg-[#3751FF]/5 rounded-xl transition-colors duration-300">
+                  <Link
+                    href={`/gallery?year=${edition.year}`}
+                    className="w-full flex items-center justify-center gap-2 py-3 text-[#3751FF] font-medium hover:bg-[#3751FF]/5 rounded-xl transition-colors duration-300"
+                  >
                     Voir les détails
                     <ChevronRight className="w-4 h-4" />
-                  </button>
+                  </Link>
                 </div>
               </motion.div>
             ))}
