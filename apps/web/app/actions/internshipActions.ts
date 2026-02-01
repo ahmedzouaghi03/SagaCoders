@@ -9,7 +9,6 @@ type CreateInternshipData = {
     companyId: number;
     eventId: number;
     title: string;
-    status: InternshipStatus;
     workMode: WorkMode;
     description?: string;
     field?: string;
@@ -24,7 +23,7 @@ export async function createInternship(data: CreateInternshipData) {
                 companyId: data.companyId,
                 eventId: data.eventId,
                 title: data.title,
-                status: data.status,
+                status: "PENDING",
                 workMode: data.workMode,
                 description: data.description,
                 field: data.field,
