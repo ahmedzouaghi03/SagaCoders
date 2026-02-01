@@ -100,10 +100,10 @@ export default function GlobalHeader({
           <div className="flex items-center gap-4">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8  rounded-lg flex items-center justify-center">
-              <img src="images/feee_logo.png" alt="" />
+              <div className="w-8 h-8 bg-gradient-to-br from-[#3D5EE1] to-[#5F74FF] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">F</span>
               </div>
-              <span className="text-[18px] font-semibold  hidden sm:block">
+              <span className="text-[18px] font-semibold text-[#202C4B] hidden sm:block">
                 FEEE
               </span>
             </Link>
