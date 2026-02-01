@@ -14,21 +14,21 @@ datasource db {
 //////////////////////
 
 enum UserRole {
-  student
-  company
-  admin
+  STUDENT
+  COMPANY
+  ADMIN
 }
 
 enum StudentFileType {
-  cv
-  motivation_letter
-  profile_picture
+  CV
+  MOTIVATION_LETTER
+  PROFILE_PICTURE
 }
 
 enum EventImageType {
-  logo
-  banner
-  gallery
+  LOGO
+  BANNER
+  GALLERY
 }
 
 enum InternshipStatus {
@@ -39,15 +39,15 @@ enum InternshipStatus {
 }
 
 enum WorkMode {
-  on_site
-  remote
-  hybrid
+  ON_SITE
+  REMOTE
+  HYBRID
 }
 
 enum ApplicationStatus {
-  pending
-  accepted
-  rejected
+  PENDING
+  ACCEPTED
+  REJECTED
 }
 
 //////////////////////
@@ -55,7 +55,7 @@ enum ApplicationStatus {
 //////////////////////
 
 model User {
-  id           Int       @id @default(autoincrement())
+  id           String    @id @default(uuid()) @db.Uuid
   email        String    @unique
   passwordHash String?
   role         UserRole
@@ -71,7 +71,7 @@ model User {
 //////////////////////
 
 model Student {
-  userId        Int      @id
+  userId        String   @id @db.Uuid
   firstName     String?
   lastName      String?
   universityId  String?
@@ -84,8 +84,8 @@ model Student {
 }
 
 model StudentFile {
-  id        Int             @id @default(autoincrement())
-  studentId Int
+  id        String          @id @default(uuid()) @db.Uuid
+  studentId String          @db.Uuid
   fileUrl   String
   fileType  StudentFileType
   createdAt DateTime        @default(now())
@@ -98,7 +98,7 @@ model StudentFile {
 //////////////////////
 
 model Company {
-  userId      Int     @id
+  userId      String  @id @db.Uuid
   name        String
   description String?
   website     String?
@@ -113,7 +113,7 @@ model Company {
 //////////////////////
 
 model Admin {
-  userId   Int    @id
+  userId   String @id @db.Uuid
   fullName String
 
   user     User   @relation(fields: [userId], references: [id])
@@ -124,7 +124,7 @@ model Admin {
 //////////////////////
 
 model Event {
-  id            Int          @id @default(autoincrement())
+  id            String       @id @default(uuid()) @db.Uuid
   name          String
   description   String?
   slogan        String?
@@ -142,8 +142,8 @@ model Event {
 }
 
 model EventImage {
-  id        Int            @id @default(autoincrement())
-  eventId   Int
+  id        String         @id @default(uuid()) @db.Uuid
+  eventId   String         @db.Uuid
   imageUrl  String
   imageType EventImageType
   createdAt DateTime       @default(now())
@@ -157,8 +157,8 @@ model EventImage {
 
 model Internship {
   id          String            @id @default(uuid()) @db.Uuid
-  companyId   Int
-  eventId     Int
+  companyId   String            @db.Uuid
+  eventId     String            @db.Uuid
   title       String
   status      InternshipStatus  @default(PENDING)
   description String?
@@ -178,12 +178,12 @@ model Internship {
 //////////////////////
 
 model Application {
-  id                        Int                @id @default(autoincrement())
-  internshipId              Int
-  applicantId               Int
+  id                        String             @id @default(uuid()) @db.Uuid
+  internshipId              String             @db.Uuid
+  applicantId               String             @db.Uuid
   applicantCv               String?
   applicantMotivationLetter String?
-  status                    ApplicationStatus
+  status                    ApplicationStatus  @default(PENDING)
   appliedAt                 DateTime           @default(now())
   reviewedAt                DateTime?
 
