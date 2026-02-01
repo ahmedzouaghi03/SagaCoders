@@ -1,9 +1,6 @@
 "use server";
 import { db } from '@monkeyprint/db';
-
-type InternshipStatus = "PENDING" | "APPROVED" | "REJECTED" | "CLOSED";
-
-type WorkMode = "REMOTE" | "ON_SITE" | "HYBRID";
+import { type InternshipStatus, type WorkMode } from '@/types';
 
 type CreateInternshipData = {
     companyId: string;
