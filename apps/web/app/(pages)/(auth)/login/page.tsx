@@ -108,23 +108,23 @@ export default function LoginPage() {
       {/* Left Side - Image Section */}
       <div className="hidden lg:block lg:w-1/2 relative">
         <Image
-          src="/images/Auth_Student.png"
+          src="/images/ENETcom.jpg"
           alt="Login"
           fill
           className="object-cover"
           priority
         />
         <div className="absolute inset-0 bg-[#4B6FFF]/70" />
-        
+
         {/* Content Overlay */}
         <div className="absolute inset-0 flex flex-col justify-center px-12 xl:px-20">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 w-fit mb-6">
+          <Link href="/" className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 w-fit mb-6 hover:bg-white/30 transition-colors">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
-            <span className="text-white text-sm font-medium">Welcome Back</span>
-          </div>
+            <span className="text-white text-sm font-medium">Return to Home</span>
+          </Link>
 
           {/* Main Heading */}
           <h1 className="text-4xl xl:text-5xl font-bold text-white mb-4 leading-tight">
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
           {/* Description */}
           <p className="text-white/80 text-lg mb-8 max-w-md">
-            Access your account to explore internship opportunities, manage applications, 
+            Access your account to explore internship opportunities, manage applications,
             and connect with industry-leading companies.
           </p>
 
@@ -248,8 +248,8 @@ export default function LoginPage() {
 
                 {/* Forgot Password Link */}
                 <div className="flex justify-end">
-                  <Link 
-                    href="/forgetPassword" 
+                  <Link
+                    href="/forgetPassword"
                     className="text-sm text-[#3D5EE1] hover:underline font-roboto"
                   >
                     Forgot Password?

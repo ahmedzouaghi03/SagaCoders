@@ -205,6 +205,7 @@ export default function HomePage() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className="text-lg md:text-xl text-gray-300 mb-8 leading-relaxed"
               >
+                La 11ème édition du forum annuel de ENET’Com Étudiants Entreprises FEEE 11.0 sous le thème "AUTONOMOUS INNOVATION, EMPOWERING THE NEXT GENERATION"
                 Le rendez-vous annuel incontournable qui connecte les étudiants de
                 l'ENET'COM avec les entreprises leaders du secteur technologique.
                 Découvrez des opportunités de stage, d'emploi et de développement
